@@ -1,0 +1,72 @@
+.payment-container {
+    padding-top: 20px;
+    width: 50%;
+    margin: auto;
+}
+
+.payment-input-container {
+    display: flex;
+}
+
+.payment-file-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.payment-container h2 {
+    text-align: center;
+}
+
+.payment-input {
+    background-color: #555;
+    width: 90%;
+    font-size: 1.3rem;
+    color: white;
+    flex: 1;
+}
+
+.payment-container textarea {
+    height: 200px;
+    font-size: 0.8rem;
+}
+
+.payment-header {
+    color: #AAA;
+    padding-bottom: 5px;
+}
+
+.payment-container .status-indicator {
+    text-align: center;
+}
+
+.success {
+    color: greenyellow;
+}
+
+.failure {
+    color: red;
+}
+
+button {
+    color: black;
+    background-color: #bbb;
+    padding: 5px 10px;
+    border-radius: 1px;
+    font-size: 1rem;
+    border: none;
+}
+.payment-container .submit-button {
+    margin: 0px auto;
+}
+
+.payment-button-container {
+    display: flex;
+}
+
+
+@media only screen and (max-width: 900px) {
+        .payment-container {
+            width: 92%;
+        }
+}

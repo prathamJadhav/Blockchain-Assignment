@@ -1,0 +1,10 @@
+.navbar-container {
+    padding: 5px;
+    background-color: rgba(150, 70, 47, 1);
+    text-align: center;
+    color: white;
+}
+
+.navbar-container h2 {
+    font-weight: bold;
+}

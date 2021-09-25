@@ -1,0 +1,47 @@
+.block-container span {
+    color: violet
+}
+
+.block-container .content {
+    padding-bottom: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.block-container h3 {
+    font-weight: bold;
+}
+
+.block-container h4 {
+    font-weight: bold;
+}
+
+.block-container .title {
+    font-size: 1.4rem;
+}
+
+.block-container {
+    background-color: #555;
+    overflow-wrap: break-word;
+    padding: 20px;
+    width: 375px;
+    margin: auto;
+    cursor: pointer;
+}
+
+.main-block-container .selected {
+    background-color: rgb(60, 99, 61)
+}
+
+.block-container .title-header {
+    font-size: 0.8rem;
+    color: coral;
+}
+
+
+@media only screen and (max-width: 900px) {
+        .block-container {
+            width: 80%;
+        }
+}
