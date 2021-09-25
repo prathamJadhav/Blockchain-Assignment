@@ -7,12 +7,6 @@ The group members include:
 - Prathamesh Jadhav (2019A7PS0084H)
 
 ## Installation
-### Quick installation
-Run the install shell script to set everything up:
-```
-./setup.sh
-```
-or, setup everyting manually using the commands below.
 
 ### Backend:
 
