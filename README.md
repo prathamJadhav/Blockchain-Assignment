@@ -6,6 +6,37 @@ The group members include:
 - Harsh Gupta (2019A7PS0103H)
 - Prathamesh Jadhav (2019A7PS0084H)
 
+## Installation
+### Quick installation
+Run the install shell script to set everything up:
+```
+./setup.sh
+```
+or, setup everyting manually using the commands below.
+
+### Backend:
+
+Use a virutal environment to set up the python modules.
+```sh
+virtualenv env
+source env/bin/activate
+pip install -r requirements.txt
+```
+
+### Frontend:
+```sh
+cd frontend/
+npm install
+npm run build
+cd ..
+```
+After the installation is complete, run the project:
+```
+python app.py
+```
+The app will start on port `9000` by default, it should be running at localhost:9000
+
+
 ## Project Details
 Dexter's Coffee is an online portal for Dexter to add transactions in a secure tamper-proof way. The transactions he creates are stored in a blockchain and are publicly viewable.
 
