@@ -31,6 +31,7 @@ python app.py
 The app will start on port `9000` by default, it should be running at localhost:9000
 
 
+
 ## Project Details
 Dexter's Coffee is an online portal for Dexter to add transactions in a secure tamper-proof way. The transactions he creates are stored in a blockchain and are publicly viewable.
 
@@ -51,6 +52,9 @@ mv private2.pem private.pem
 This outputs two files: `private.pem` and `public.pem` which are the required keys.
 
 The private key is stored securely with Dexter and the public key is stored at the backend for verification. 
+
+The private key for testing purposes can be found at:
+https://drive.google.com/file/d/1Y6I3l-4CrExcwah7JW82Ic6PeImKOmO_/view?usp=sharing
 
 Here is a screenshot of the payment page on the website.
 
