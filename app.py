@@ -12,9 +12,12 @@ from Crypto.PublicKey import RSA
 import base64
 import merkleTree
 
-app = Flask(__name__, static_folder='frontend/build/static', template_folder='frontend/build')
+app = Flask(__name__, static_folder='frontend/build/static',
+            template_folder='frontend/build')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://eqcarzlf:OPWaAQ7FGpVc1uLXBrpZBfEDd_QbRphZ@chunee.db.elephantsql.com/eqcarzlf'
+# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://eqcarzlf:OPWaAQ7FGpVc1uLXBrpZBfEDd_QbRphZ@chunee.db.elephantsql.com/eqcarzlf'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://znbormsc:7bHI6eqE45hLX4PT0Wj5Ll3BlktVshxR@arjuna.db.elephantsql.com/znbormsc'
+
 db = SQLAlchemy(app)
 db.init_app(app)
 # app.debug(True)
@@ -42,7 +45,7 @@ class Blocks(db.Model):
     block_height = db.Column(db.Integer)
     merkleRoot = db.Column(db.String(256))
 
-    def __init__(self, timestamp, block_hash, previous_block_hash, block_height,merkleRoot):
+    def __init__(self, timestamp, block_hash, previous_block_hash, block_height, merkleRoot):
         self.block_hash = block_hash
         self.block_height = block_height
         self.previous_block_hash = previous_block_hash
@@ -66,7 +69,6 @@ class Verified_Transactions(db.Model):
         self.customer = customer
         self.timestamp = timestamp
         self.block_hash = block_hash
-
 
 
 # #class for unverifired transactions
@@ -174,7 +176,8 @@ def viewTransactions():
     json_data = request.get_json()
     blockHash = json_data['block_hash']
 
-    transactionsList = Verified_Transactions.query.filter_by(block_hash=blockHash).order_by(Verified_Transactions.timestamp).all()
+    transactionsList = Verified_Transactions.query.filter_by(
+        block_hash=blockHash).order_by(Verified_Transactions.timestamp).all()
 
     response = []
     for transaction in transactionsList:
@@ -213,14 +216,16 @@ def viewUnverifiedTransactions():
 @app.route('/api/verifyTransaction', methods=['GET'])
 def verify():
     # query and get the list of unverified transactions sorted according to ascending timestamps
-    unverifiedTransactions = Unverified_Transactions.query.order_by(Unverified_Transactions.timestamp).all()
+    unverifiedTransactions = Unverified_Transactions.query.order_by(
+        Unverified_Transactions.timestamp).all()
     unverifiedCount = Unverified_Transactions.query.count()
     if unverifiedCount == 0:
         # if there are no transactions to verify simply return
-        
-        return jsonify({'message':'empty'}),200
-        
-    block = Blocks.query.order_by(Blocks.timestamp.desc()).first()  # gets all the blocks
+
+        return jsonify({'message': 'empty'}), 200
+
+    block = Blocks.query.order_by(
+        Blocks.timestamp.desc()).first()  # gets all the blocks
     blockHeight = Blocks.query.count()
     previous_block_hash = None
     hashString = ""
@@ -231,7 +236,8 @@ def verify():
     for unverified in unverifiedTransactions:
         if(count < 10):
             # making the merke tree
-            listForMerkle.append(unverified.tid+unverified.customer+str(unverified.amount)+str(unverified.timestamp))
+            listForMerkle.append(unverified.tid+unverified.customer +
+                                 str(unverified.amount)+str(unverified.timestamp))
 
             count += 1
 
@@ -263,10 +269,11 @@ def verify():
 
     # this represents the block hash
     hashString += merkleRoot
-    
+
     blockHash = sha256(hashString.encode()).hexdigest()
 
-    newBlock = Blocks(timestamp, blockHash, previous_block_hash, blockHeight,merkleRoot)
+    newBlock = Blocks(timestamp, blockHash,
+                      previous_block_hash, blockHeight, merkleRoot)
 
     db.session.add(newBlock)
     db.session.commit()
@@ -276,7 +283,8 @@ def verify():
     for unverified in unverifiedTransactions:
         if(count < 10):
             # making the verified entry
-            verified = Verified_Transactions(unverified.tid, unverified.customer, unverified.amount, unverified.timestamp, blockHash)
+            verified = Verified_Transactions(
+                unverified.tid, unverified.customer, unverified.amount, unverified.timestamp, blockHash)
 
             # removing the transaction from unverified table
             db.session.delete(unverified)
@@ -291,11 +299,11 @@ def verify():
 
     return jsonify(response), 200
 
-@app.route('/api/verifyBlocks',methods=['GET'])
-def verifyBlocks():
-    #calculate the block hash again and then check if it matches the hash value
-    blockList = Blocks.query.order_by(Blocks.timestamp).all()
 
+@app.route('/api/verifyBlocks', methods=['GET'])
+def verifyBlocks():
+    # calculate the block hash again and then check if it matches the hash value
+    blockList = Blocks.query.order_by(Blocks.timestamp).all()
 
     for block in blockList:
 
@@ -304,16 +312,19 @@ def verifyBlocks():
         if block.block_height == 0:
             hashString += str(block.timestamp) + str(block.block_height)
         else:
-            hashString += str(block.timestamp)+block.previous_block_hash+str(block.block_height)
+            hashString += str(block.timestamp) + \
+                block.previous_block_hash+str(block.block_height)
 
-        transactionList = Verified_Transactions.query.filter_by(block_hash=block.block_hash).all()
-        #print(str(Verified_Transactions.query.filter_by(block_hash=block.block_hash).count()))
+        transactionList = Verified_Transactions.query.filter_by(
+            block_hash=block.block_hash).all()
+        # print(str(Verified_Transactions.query.filter_by(block_hash=block.block_hash).count()))
 
-        #get the transactions and make the merkle root
+        # get the transactions and make the merkle root
         listForMerkle = []
         for transaction in transactionList:
             # making the merke tree
-            listForMerkle.append(transaction.tid+transaction.customer+str(transaction.amount)+str(transaction.timestamp))
+            listForMerkle.append(transaction.tid+transaction.customer +
+                                 str(transaction.amount)+str(transaction.timestamp))
 
         merkleRoot = (merkleTree.buildTree(listForMerkle))
 
@@ -331,12 +342,12 @@ def verifyBlocks():
             message = 'Error'
             response['message'] = message
             response['error'] = True
-            return jsonify(response),400        
+            return jsonify(response), 400
 
     message = 'success'
     response['message'] = message
     response['error'] = False
-    return jsonify(response),200    
+    return jsonify(response), 200
 
 
 if __name__ == '__main__':
