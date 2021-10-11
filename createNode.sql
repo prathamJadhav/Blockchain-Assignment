@@ -1,0 +1,5 @@
+CREATE TABLE `nodes` (
+	`node_id` INT NOT NULL AUTO_INCREMENT,
+	`stake` DECIMAL NOT NULL DEFAULT '0',
+	PRIMARY KEY (`node_id`)
+);
