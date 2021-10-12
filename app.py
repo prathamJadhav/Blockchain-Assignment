@@ -53,7 +53,17 @@ class Blocks(db.Model):
         self.merkleRoot = merkleRoot
 
 
+class Nodes(db.Model):
+    node_id = db.Column(db.Integer, primary_key=True)
+    stake = db.Column(db.Numeric)
+
+    def __init__(self, node_id, stake):
+        self.node_id = node_id
+        self.stake = stake
+
 # class for verified transactions
+
+
 class Verified_Transactions(db.Model):
     #__tablename__ = 'VerifiedTransactions'
 
@@ -216,6 +226,14 @@ def viewUnverifiedTransactions():
 @app.route('/api/verifyTransaction', methods=['GET'])
 def verify():
     # query and get the list of unverified transactions sorted according to ascending timestamps
+
+    # run the algorithm for pos and select a node
+    # get nodes from sql
+    nodesList = Nodes.query.order_by(Nodes.node_id).all()
+    print(nodesList[0].node_id)
+    # send the transactions to the node
+    # get the block from the selected node and send the block, traensctions to other nodes to verfiy
+
     unverifiedTransactions = Unverified_Transactions.query.order_by(
         Unverified_Transactions.timestamp).all()
     unverifiedCount = Unverified_Transactions.query.count()
