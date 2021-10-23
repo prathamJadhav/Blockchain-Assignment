@@ -11,6 +11,7 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 import base64
 import merkleTree
+from ProofOfStake import ProofOfStake
 
 app = Flask(__name__, static_folder='frontend/build/static',
             template_folder='frontend/build')
@@ -22,6 +23,7 @@ db = SQLAlchemy(app)
 db.init_app(app)
 # app.debug(True)
 CORS(app, support_credentials=True)
+pos = ProofOfStake()
 # app.config['CORS_HEADERS'] = 'Content-Type'
 
 #api = Api(app,prefix='/api')
@@ -53,7 +55,20 @@ class Blocks(db.Model):
         self.merkleRoot = merkleRoot
 
 
+class Nodes(db.Model):
+    node_id = db.Column(db.Integer, primary_key=True)
+    stake = db.Column(db.Numeric)
+
+    def __init__(self, node_id, stake):
+        self.node_id = node_id
+        self.stake = stake
+    
+    
+
+
 # class for verified transactions
+
+
 class Verified_Transactions(db.Model):
     #__tablename__ = 'VerifiedTransactions'
 
@@ -216,6 +231,14 @@ def viewUnverifiedTransactions():
 @app.route('/api/verifyTransaction', methods=['GET'])
 def verify():
     # query and get the list of unverified transactions sorted according to ascending timestamps
+
+    # run the algorithm for pos and select a node
+    # get nodes from sql
+    nodesList = Nodes.query.order_by(Nodes.node_id).all()
+    print(nodesList[0].node_id)
+    # send the transactions to the node
+    # get the block from the selected node and send the block, traensctions to other nodes to verfiy
+
     unverifiedTransactions = Unverified_Transactions.query.order_by(
         Unverified_Transactions.timestamp).all()
     unverifiedCount = Unverified_Transactions.query.count()
@@ -266,6 +289,12 @@ def verify():
         hashString += str(timestamp) + previous_block_hash + str(blockHeight)
 
     response = {'message': 'success'}
+  #forger --------------
+    
+    forger = pos.forger(previous_block_hash)
+
+
+
 
     # this represents the block hash
     hashString += merkleRoot
