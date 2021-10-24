@@ -120,9 +120,11 @@ class Blockchain():
 
         self.block_hash = sha256(self.block_data.encode()).hexdigest()
 
-#adding a node into the Node table
+# adding a node into the Node table
+
+
 @app.route('/api/addNode', methods=['POST'])
-def transaction():
+def newNode():
     json_data = request.get_json()
 
     node_name = json_data['node_name']  # name
@@ -146,7 +148,7 @@ def transaction():
             'error': False
         }
 
-        node = Nodes(node_id ,stake, timestamp)
+        node = Nodes(node_id, stake, timestamp)
 
         db.session.add(node)
         db.session.commit()
@@ -333,12 +335,9 @@ def verify():
         hashString += str(timestamp) + previous_block_hash + str(blockHeight)
 
     response = {'message': 'success'}
-  #forger --------------
-    
+  # forger --------------
+
     forger = pos.forger(previous_block_hash)
-
-
-
 
     # this represents the block hash
     hashString += merkleRoot
