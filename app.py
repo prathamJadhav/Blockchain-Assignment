@@ -64,9 +64,6 @@ class Nodes(db.Model):
         self.node_id = node_id
         self.stake = stake
         self.timestamp = timestamp
-    
-    
-
 
 # class for verified transactions
 
