@@ -62,9 +62,6 @@ class Nodes(db.Model):
     def __init__(self, node_id, stake):
         self.node_id = node_id
         self.stake = stake
-    
-    
-
 
 # class for verified transactions
 
