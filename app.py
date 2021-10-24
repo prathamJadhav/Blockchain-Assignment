@@ -58,10 +58,12 @@ class Blocks(db.Model):
 class Nodes(db.Model):
     node_id = db.Column(db.Integer, primary_key=True)
     stake = db.Column(db.Numeric)
+    timestamp = db.Column(db.Integer)
 
-    def __init__(self, node_id, stake):
+    def __init__(self, node_id, stake, timestamp):
         self.node_id = node_id
         self.stake = stake
+        self.timestamp = timestamp
 
 # class for verified transactions
 
@@ -117,6 +119,51 @@ class Blockchain():
             "-" + previous_block_hash
 
         self.block_hash = sha256(self.block_data.encode()).hexdigest()
+
+#adding a node into the Node table
+@app.route('/api/addNode', methods=['POST'])
+def transaction():
+    json_data = request.get_json()
+
+    node_name = json_data['node_name']  # name
+    stake = json_data['stake']  # stake
+    node_id = json_data['node_id']  # unique node_id
+    message = bytes(json_data['message'], 'utf-8')  # stringified json
+    signature = json_data['signature']  # signature
+    timestamp = int(round(time.time()))
+    #block_hash = json_data['block_hash']
+    error = False
+
+    # checking authenticity
+    key = RSA.import_key(open('public.pem').read())
+
+    h = SHA256.new(message)
+
+    try:
+        pkcs1_15.new(key).verify(h, bytearray(base64.b64decode(signature)))
+        response = {
+            'message': 'Success',
+            'error': False
+        }
+
+        node = Nodes(node_id ,stake, timestamp)
+
+        db.session.add(node)
+        db.session.commit()
+
+        return jsonify(response), 200  # 200-good, 400-bad
+    except (ValueError, TypeError):
+        response = {
+            'message': 'Signature Invalid',
+            'error': True
+        }
+        return jsonify(response), 400  # 200-good, 400-bad
+    except (BaseException):
+        response = {
+            'message': 'Fraudulent Node',
+            'error': True
+        }
+        return jsonify(response), 400  # 200-good, 400-bad
 
 
 @app.route('/api/addTransaction', methods=['POST'])
