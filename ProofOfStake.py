@@ -1,28 +1,31 @@
 from BlockchainUtils import BlockchainUtils
 from Lot import Lot
 
+class POS():
 
-class ProofOfStake():
-
-    def __init__(self):
+    def __init__(self,nodes):
         self.stakers = {}
+        for node in nodes:
+            self.stakers[node.node_id] = node.stake
 
-    def update(self, publicKeyString, stake):
-        if publicKeyString in self.stakers.keys():
-            self.stakers[publicKeyString] += stake
-        else:
-            self.stakers[publicKeyString] = stake
-
-    def get(self, publicKeyString):
-        if publicKeyString in self.stakers.keys():
-            return self.stakers[publicKeyString]
+    def get(self, node_id):
+        if node_id in self.stakers.keys():
+            return round(self.stakers[node_id])
         else:
             return None
 
     def validatorLots(self, seed):
         lots = []
+        stakeArray = []
+        totalStake = 0
+        for validatorStake in self.stakers.values():
+            stakeArray.append(validatorStake)
+            totalStake += validatorStake
+        for i in range(len(stakeArray)):
+            stakeArray[i]/=totalStake*100
+            stakeArray[i] = round(stakeArray[i])
         for validator in self.stakers.keys():
-            for stake in range(self.get(validator)):
+            for stake in stakeArray:
                 lots.append(Lot(validator, stake+1, seed))
         return lots
 
@@ -41,4 +44,4 @@ class ProofOfStake():
     def forger(self, lastBlockHash):
         lots = self.validatorLots(lastBlockHash)
         winnerLot = self.winnerLot(lots, lastBlockHash)
-        return winnerLot.publicKey
+        return winnerLot.node_id

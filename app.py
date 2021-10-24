@@ -11,19 +11,21 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 import base64
 import merkleTree
-from ProofOfStake import ProofOfStake
+from ProofOfStake import POS
+import random
+import node
 
 app = Flask(__name__, static_folder='frontend/build/static',
             template_folder='frontend/build')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-# app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://eqcarzlf:OPWaAQ7FGpVc1uLXBrpZBfEDd_QbRphZ@chunee.db.elephantsql.com/eqcarzlf'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://znbormsc:7bHI6eqE45hLX4PT0Wj5Ll3BlktVshxR@arjuna.db.elephantsql.com/znbormsc'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://eqcarzlf:OPWaAQ7FGpVc1uLXBrpZBfEDd_QbRphZ@chunee.db.elephantsql.com/eqcarzlf'
+#app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://znbormsc:7bHI6eqE45hLX4PT0Wj5Ll3BlktVshxR@arjuna.db.elephantsql.com/znbormsc'
 
 db = SQLAlchemy(app)
 db.init_app(app)
 # app.debug(True)
 CORS(app, support_credentials=True)
-pos = ProofOfStake()
+# pos = POS()
 # app.config['CORS_HEADERS'] = 'Content-Type'
 
 #api = Api(app,prefix='/api')
@@ -41,8 +43,7 @@ class Blocks(db.Model):
     #__tablename__ = 'Blocks'
 
     block_hash = db.Column(db.String(256), primary_key=True)
-    previous_block_hash = db.Column(
-        (db.String(256)), db.ForeignKey('blocks.block_hash'))
+    previous_block_hash = db.Column((db.String(256)), db.ForeignKey('blocks.block_hash'))
     timestamp = db.Column(db.Integer)
     block_height = db.Column(db.Integer)
     merkleRoot = db.Column(db.String(256))
@@ -56,13 +57,28 @@ class Blocks(db.Model):
 
 
 class Nodes(db.Model):
-    node_id = db.Column(db.Integer, primary_key=True)
-    stake = db.Column(db.Numeric)
+    node_id = db.Column(db.String, primary_key=True)
+    stake = db.Column(db.Float)
     timestamp = db.Column(db.Integer)
 
     def __init__(self, node_id, stake, timestamp):
         self.node_id = node_id
         self.stake = stake
+        self.timestamp = timestamp
+
+class StakeUpdates(db.Model):
+    stakeUpdateId = db.Column(db.Integer, primary_key=True)
+    node_id = db.Column(db.String ,db.ForeignKey('nodes.node_id'))
+    block_hash = db.Column(db.String(256))
+    intialStake = db.Column(db.Float)
+    finalStake = db.Column(db.Float)
+    timestamp = db.Column(db.Integer)
+
+    def __init__(self, node_id, block_hash, initialStake, finalStake, timestamp):
+        self.node_id = node_id
+        self.block_hash = block_hash #NULL in case of failed transaction
+        self.intialStake = initialStake
+        self.finalStake = finalStake
         self.timestamp = timestamp
 
 # class for verified transactions
@@ -237,8 +253,7 @@ def viewTransactions():
     json_data = request.get_json()
     blockHash = json_data['block_hash']
 
-    transactionsList = Verified_Transactions.query.filter_by(
-        block_hash=blockHash).order_by(Verified_Transactions.timestamp).all()
+    transactionsList = Verified_Transactions.query.filter_by(block_hash=blockHash).order_by(Verified_Transactions.timestamp).all()
 
     response = []
     for transaction in transactionsList:
@@ -257,8 +272,7 @@ def viewTransactions():
 @app.route('/api/viewUnverifiedTransactions', methods=['GET'])
 def viewUnverifiedTransactions():
 
-    transactionsList = Unverified_Transactions.query.order_by(
-        Unverified_Transactions.timestamp).all()
+    transactionsList = Unverified_Transactions.query.order_by(Unverified_Transactions.timestamp).all()
 
     response = []
     for transaction in transactionsList:
@@ -273,6 +287,112 @@ def viewUnverifiedTransactions():
 
     return jsonify(response), 200
 
+def getValidators(forger_id):
+    #get the list of nodes which act as validator
+    validatorList = []
+    nodes = Nodes.query.all()
+    for node in nodes:
+        if node.node_id != forger_id:
+            validatorList.append(node.node_id)
+    return validatorList
+
+def validate(forger_id, forger_previous_block_hash, forger_merkle_root,transactionAmount,blockHash):
+    validatorList = getValidators(forger_id)
+
+    acceptingNodes = 0
+    rejectingNodes = 0
+
+    rejectingNodeList = []
+    acceptingNodeList = []
+
+    for validator in validatorList:
+        #every validator node will check for he correctness of the block
+        newNode = node.Node()
+        # print("forger block hash ", forger_merkle_root)
+        accepted = newNode.validate(forger_previous_block_hash, forger_merkle_root)
+        if accepted==1:
+            acceptingNodeList.append(validator)
+            acceptingNodes+=1
+        else:
+            rejectingNodeList.append(validator)
+            rejectingNodes+=1
+
+    totalValidators = acceptingNodes + rejectingNodes
+    consensus = acceptingNodes/totalValidators
+    print("consensus : ", consensus)
+    if consensus >= (2/3):
+        print("consensus granted")
+        distributeRewards(acceptingNodeList,rejectingNodeList,accepted,forger_id,transactionAmount,blockHash)
+        return True
+    
+    print("not granted")
+    distributeRewards(acceptingNodeList,rejectingNodeList,accepted,forger_id,transactionAmount,blockHash)
+    return False
+
+def distributeRewards(acceptingNodeList,rejectingNodeList,accepted,forger_id,transactionAmount,block_hash):
+    reward = 0.05*transactionAmount/(len(acceptingNodeList) + len(rejectingNodeList) + 1)
+    timestamp = int(round(time.time()))
+    if accepted == 1:
+        print("accepted")
+        for node in acceptingNodeList:
+            # get stake
+            nodeToBeUpdated = Nodes.query.filter_by(node_id=node).first()
+            stake = nodeToBeUpdated.stake
+            newStake = stake + reward
+            stakeUpdate = StakeUpdates(node,block_hash,stake,newStake,timestamp)
+            db.session.add(stakeUpdate)
+            nodeToBeUpdated.stake = newStake
+            db.session.commit()
+        
+        # for forger
+        nodeToBeUpdated = Nodes.query.filter_by(node_id=forger_id).first()
+        stake = nodeToBeUpdated.stake
+        newStake = stake + reward
+        stakeUpdate = StakeUpdates(forger_id,block_hash,stake,newStake,timestamp)
+        db.session.add(stakeUpdate)
+        nodeToBeUpdated.stake = newStake
+        db.session.commit()
+
+        for node in rejectingNodeList:
+            nodeToBeUpdated = Nodes.query.filter_by(node_id=node).first()
+            stake = nodeToBeUpdated.stake
+            newStake = stake - reward
+            stakeUpdate = StakeUpdates(node,block_hash,stake,newStake,timestamp)
+            db.session.add(stakeUpdate)
+            nodeToBeUpdated.stake = newStake
+            db.session.commit()
+
+    else:
+        print("rejected")
+        for node in acceptingNodeList:
+            # get stake
+            nodeToBeUpdated = Nodes.query.filter_by(node_id=node).first()
+            stake = nodeToBeUpdated.stake
+            newStake = stake - reward
+            stakeUpdate = StakeUpdates(node,block_hash,stake,newStake,timestamp)
+            db.session.add(stakeUpdate)
+            nodeToBeUpdated.stake = newStake
+            db.session.commit()
+        
+        # for forger
+        nodeToBeUpdated = Nodes.query.filter_by(node_id=forger_id).first()
+        stake = nodeToBeUpdated.stake
+        newStake = stake - reward
+        stakeUpdate = StakeUpdates(forger_id,block_hash,stake,newStake,timestamp)
+        db.session.add(stakeUpdate)
+        nodeToBeUpdated.stake = newStake
+        db.session.commit()
+
+        for node in rejectingNodeList:
+            nodeToBeUpdated = Nodes.query.filter_by(node_id=node).first()
+            stake = nodeToBeUpdated.stake
+            newStake = stake + reward
+            stakeUpdate = StakeUpdates(node,block_hash,stake,newStake,timestamp)
+            db.session.add(stakeUpdate)
+            nodeToBeUpdated.stake = newStake
+            db.session.commit()
+        
+    return
 
 @app.route('/api/verifyTransaction', methods=['GET'])
 def verify():
@@ -280,39 +400,52 @@ def verify():
 
     # run the algorithm for pos and select a node
     # get nodes from sql
-    nodesList = Nodes.query.order_by(Nodes.node_id).all()
-    print(nodesList[0].node_id)
+    nodesList = Nodes.query.all()
+    pos = POS(nodesList)
+    # print(nodesList[0].node_id)
     # send the transactions to the node
     # get the block from the selected node and send the block, traensctions to other nodes to verfiy
 
-    unverifiedTransactions = Unverified_Transactions.query.order_by(
-        Unverified_Transactions.timestamp).all()
+    unverifiedTransactions = Unverified_Transactions.query.order_by(Unverified_Transactions.timestamp).all()
     unverifiedCount = Unverified_Transactions.query.count()
     if unverifiedCount == 0:
         # if there are no transactions to verify simply return
-
         return jsonify({'message': 'empty'}), 200
 
-    block = Blocks.query.order_by(
-        Blocks.timestamp.desc()).first()  # gets all the blocks
+    block = Blocks.query.order_by(Blocks.timestamp.desc()).first()  # gets all the blocks
     blockHeight = Blocks.query.count()
     previous_block_hash = None
     hashString = ""
 
     count = 0
+    transactionAmount = 0
     # making the unverified transaction into verified transaction
     listForMerkle = []
     for unverified in unverifiedTransactions:
         if(count < 10):
             # making the merke tree
-            listForMerkle.append(unverified.tid+unverified.customer +
-                                 str(unverified.amount)+str(unverified.timestamp))
-
+            listForMerkle.append(unverified.tid+unverified.customer + str(unverified.amount)+str(unverified.timestamp))
+            transactionAmount += unverified.amount
             count += 1
-
         else:
             break
 
+    if block is None:
+        previous_block_hash = None
+    else:
+        previous_block_hash = block.block_hash
+
+    # adding the transaction fee transaction
+    # unverifiedTransactions.append(Unverified_Transactions(previous_block_hash,"Forger/Validator Fee",transactionAmount*0.05*-1,unverifiedTransactions[-1].timestamp))
+    # unverified = unverifiedTransactions[-1]
+    # listForMerkle.append(unverified.tid+unverified.customer + str(unverified.amount)+str(unverified.timestamp))
+
+    # this decodes the forger node and it returns the node_id of the forger node
+    forger = pos.forger(previous_block_hash)
+    print("forger", forger)
+    # forger = nodesList[0].node_id
+
+    # the forger calculates merkle root
     merkleRoot = (merkleTree.buildTree(listForMerkle))
 
     timestamp = int(round(time.time()))
@@ -334,43 +467,52 @@ def verify():
 
         hashString += str(timestamp) + previous_block_hash + str(blockHeight)
 
-    response = {'message': 'success'}
-  # forger --------------
-
-    forger = pos.forger(previous_block_hash)
-
-    # this represents the block hash
     hashString += merkleRoot
-
     blockHash = sha256(hashString.encode()).hexdigest()
 
-    newBlock = Blocks(timestamp, blockHash,
-                      previous_block_hash, blockHeight, merkleRoot)
+    validation = validate(forger, previous_block_hash, merkleRoot, transactionAmount,blockHash)
 
-    db.session.add(newBlock)
-    db.session.commit()
+    response = {}
 
-    count = 0
-    # making the unverified transaction into verified transaction
-    for unverified in unverifiedTransactions:
-        if(count < 10):
-            # making the verified entry
-            verified = Verified_Transactions(
-                unverified.tid, unverified.customer, unverified.amount, unverified.timestamp, blockHash)
+    if validation == True:
+        #make block
+        newBlock = Blocks(timestamp, blockHash, previous_block_hash, blockHeight, merkleRoot)
+        db.session.add(newBlock)
+        db.session.commit()
 
-            # removing the transaction from unverified table
-            db.session.delete(unverified)
+        count = 0
+        # making the unverified transaction into verified transaction
+        for unverified in unverifiedTransactions:
+            if(count < 10):
+                # making the verified entry
+                verified = Verified_Transactions(unverified.tid, unverified.customer, unverified.amount, unverified.timestamp, blockHash)
 
-            # adding into verified table
-            db.session.add(verified)
-            db.session.commit()
-            count += 1
+                # removing the transaction from unverified table
+                db.session.delete(unverified)
 
-        else:
-            break
+                # adding into verified table
+                db.session.add(verified)
+                db.session.commit()
+                count += 1
 
-    return jsonify(response), 200
+            else:
+                break
 
+        response['message'] = "success"
+        response['error'] = False
+        return jsonify(response), 200
+
+    else:
+        response['message'] = "failure"
+        response['error'] = True
+        return jsonify(response), 400
+    # this represents the block hash
+    
+    # the forger goes on to make the block and passes it on to the validators
+    
+    # if 2/3 majority is acheived among the validators then the block is forged otherwise error is returned
+
+    # new block is added to blockchain
 
 @app.route('/api/verifyBlocks', methods=['GET'])
 def verifyBlocks():
@@ -420,7 +562,6 @@ def verifyBlocks():
     response['message'] = message
     response['error'] = False
     return jsonify(response), 200
-
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', use_reloader=True, port=9000, debug=True)
