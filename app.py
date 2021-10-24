@@ -11,6 +11,7 @@ from Crypto.Hash import SHA256
 from Crypto.PublicKey import RSA
 import base64
 import merkleTree
+from ProofOfStake import ProofOfStake
 
 app = Flask(__name__, static_folder='frontend/build/static',
             template_folder='frontend/build')
@@ -22,6 +23,7 @@ db = SQLAlchemy(app)
 db.init_app(app)
 # app.debug(True)
 CORS(app, support_credentials=True)
+pos = ProofOfStake()
 # app.config['CORS_HEADERS'] = 'Content-Type'
 
 #api = Api(app,prefix='/api')
@@ -284,6 +286,12 @@ def verify():
         hashString += str(timestamp) + previous_block_hash + str(blockHeight)
 
     response = {'message': 'success'}
+  #forger --------------
+    
+    forger = pos.forger(previous_block_hash)
+
+
+
 
     # this represents the block hash
     hashString += merkleRoot
