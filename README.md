@@ -33,7 +33,7 @@ Once verified, the node details are stored in the database.
 We can see the 'Add Node' option on the right in the image given above.
 
 ### Forging a block
-A node is selected with probability proportionate to its stake in the system. 
+When a new block needs to be created, a node is selected with probability proportionate to its stake in the system. 
 
 
 ## Installation
