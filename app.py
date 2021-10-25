@@ -379,8 +379,7 @@ def validate(forger_id, forger_previous_block_hash, forger_merkle_root, transact
 
 
 def distributeRewards(acceptingNodeList, rejectingNodeList, accepted, forger_id, transactionAmount, block_hash):
-    reward = 0.05*transactionAmount / \
-        (len(acceptingNodeList) + len(rejectingNodeList) + 1)
+    reward = 0.001*transactionAmount / (len(acceptingNodeList) + len(rejectingNodeList) + 1)
     timestamp = int(round(time.time()))
     if accepted == 1:
         print("accepted")
