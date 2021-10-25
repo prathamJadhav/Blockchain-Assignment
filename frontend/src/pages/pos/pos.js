@@ -140,7 +140,7 @@ function PoS() {
                             <td>{stakeUpdates.length > 0 ? stakeUpdates[0].initialStake : "-"}</td>
                         </tr>
                         <tr>
-                            <td colSpan="3">Final Stake</td>
+                            <td colSpan="3">Current Stake</td>
                             <td className={getFinalColorAttribute(stakeUpdates)}>{getFinalStakeString(stakeUpdates)}</td>
                         </tr>
 
