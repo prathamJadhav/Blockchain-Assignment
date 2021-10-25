@@ -10,6 +10,8 @@ The group members include:
 Dexter's Coffee is an online portal for Dexter to add transactions in a secure tamper-proof way. The transactions he creates are stored in a blockchain and are publicly viewable.
 
 The online portal is hosted here: https://dexters-coffee.herokuapp.com
+(Note: You might face issue with private key if you use http on heroku app. Please use the above https link)
+(Note: Incase of a "too many connections" error please write back to us. This is introduced due to the service we are using for our database)
 
 ## New in Assignment 2 (Implementation of PoS consensus algorithm)
 ### Changes in Frontend and codebase
