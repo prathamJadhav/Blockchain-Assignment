@@ -3,7 +3,7 @@ import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
 
 
-function AddNode() {
+function AddNode(props) {
 
     function str2ab(str) {
         const buf = new ArrayBuffer(str.length);
@@ -80,6 +80,7 @@ function AddNode() {
                                 setInProgress(false)
                                 setStatus(res.data.message)
                                 setSuccess(!res.data.error || true)
+                                props.getNodes()
                             })
                             .catch((err) => {
                                 console.log(err.response)

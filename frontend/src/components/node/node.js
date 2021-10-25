@@ -8,7 +8,7 @@ function Node(props) {
     return (
         <div className={"pos-node-container " + (props.selected ? "selected" : "")} onClick={nodeSelected}>
             <h3>{props.node.node_name}</h3>
-            <p>Stake: {props.node.stake}</p>
+            <p>Stake: {props.node.stake.toFixed(2)}</p>
         </div>
     )
 }

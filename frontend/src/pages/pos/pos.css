@@ -53,6 +53,18 @@
     background-color: #555;
 }
 
+.block_hash_table {
+    /* white-space: nowrap; */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: violet;
+    white-space: nowrap;
+    overflow-wrap: break-word;
+    /* overflow: hidden; */
+    text-overflow: ellipsis;
+    max-width: 100px;
+}
+
 .add-node-container h2 {
     text-align: center;
 }
@@ -101,6 +113,13 @@ button {
 
 @media only screen and (max-width: 1200px) {
 
+
+    .pos-main-container {
+    display: block;
+    width: 99%;
+    margin: 20px auto;
+    gap: 15px;
+}
     .add-node-container {
         background-color: #333;
         width: 100%;

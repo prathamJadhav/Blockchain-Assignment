@@ -8,33 +8,7 @@ import 'react-multi-carousel/lib/styles.css';
 
 function PoS() {
 
-    const [nodes, setNodes] = useState([
-        {
-            node_name: "Test Node 1",
-            stake: 32,
-            node_id: 1
-        },
-        {
-            node_name: "Test Node 2",
-            stake: 64,
-            node_id: 1
-        },
-        {
-            node_name: "Test Node 3",
-            stake: 128,
-            node_id: 1
-        },
-        {
-            node_name: "Test Node 4",
-            stake: 128,
-            node_id: 1
-        },
-        {
-            node_name: "Test Node 5",
-            stake: 128,
-            node_id: 1
-        }
-    ])
+    const [nodes, setNodes] = useState([])
     const [selected, setSelected] = useState(0)
     const [stakeUpdates, setStakeUpdates] = useState([])
 
@@ -58,12 +32,46 @@ function PoS() {
             })
     }
 
+    const getChangeString = (initialStake, finalStake) => {
+        const percentage = ((finalStake - initialStake) * 100) / initialStake
+        const stringP = percentage > 0 ? "+" : ""
+        const fString = (finalStake - initialStake).toFixed(4) + " (" + stringP + (percentage.toFixed(2)) + "%)"
+        return fString
+    }
+
+    const getFinalStakeString = (stakeUpdates) => {
+        if (stakeUpdates.length == 0) {
+            return "-"
+        }
+        const percentage = ((stakeUpdates[stakeUpdates.length - 1].finalStake - stakeUpdates[0].initialStake) * 100) / stakeUpdates[0].initialStake
+        const stringP = percentage > 0 ? "+" : ""
+        const fString = stakeUpdates[stakeUpdates.length - 1].finalStake.toFixed(4) + " (" + stringP + (percentage.toFixed(2)) + "%)"
+        return fString
+    }
+    const getDateString = (unixTimestamp) => {
+        const date = new Date(unixTimestamp * 1000)
+        return date.toLocaleString()
+    }
+
+    const getColorAttribute = (initialStake, finalStake) => {
+        const percentage = ((finalStake - initialStake) * 100) / initialStake
+        return percentage >= 0 ? "success" : "failure"
+    }
+    const getFinalColorAttribute = (stakeUpdates) => {
+        if (stakeUpdates.length == 0) {
+            return ""
+        }
+        const percentage = ((stakeUpdates[stakeUpdates.length - 1].finalStake - stakeUpdates[0].initialStake) * 100) / stakeUpdates[0].initialStake
+        return percentage >= 0 ? "success" : "failure"
+    }
+
     const getStakeUpdates = () => {
         if (nodes[0] == null) { return }
         axios.post('/api/viewStakeUpdates', {
             node_id: nodes[selected].node_id
         })
             .then((res) => {
+                console.log(res)
                 setStakeUpdates(res.data)
             })
     }
@@ -109,7 +117,7 @@ function PoS() {
                 </Carousel>
                 <br />
                 <div className="selected-node-details-container">
-                    <h2 className="node-title">Test Node 1</h2>
+                    <h2 className="node-title">{nodes.length == 0 ? "" : nodes[selected].node_name}</h2>
                     <table className="node-stake-table">
                         <tr>
                             <th>Block Hash</th>
@@ -117,49 +125,23 @@ function PoS() {
                             <th>Stake Before</th>
                             <th>Reward/Penalty</th>
                         </tr>
-                        <tr>
-                            <td>asfsdf</td>
-                            <td>12th October, 2021</td>
-                            <td>32</td>
-                            <td><span className="success"> +1.4 (+4.3%)</span></td>
-                        </tr>
-                        <tr>
-                            <td>gdffd</td>
-                            <td>13th October, 2021</td>
-                            <td>32</td>
-                            <td><span className="failure">-1.4 (-4.2%)</span></td>
-                        </tr>
-                        <tr>
-                            <td>gdd</td>
-                            <td>14th October, 2021</td>
-                            <td>32</td>
-                            <td><span className="success">+3 (+9.4%)</span></td>
-                        </tr>
-                        <tr>
-                            <td>asfsdf</td>
-                            <td>12th October, 2021</td>
-                            <td>32</td>
-                            <td><span className="success"> +1.4 (+4.3%)</span></td>
-                        </tr>
-                        <tr>
-                            <td>gdffd</td>
-                            <td>13th October, 2021</td>
-                            <td>32</td>
-                            <td><span className="failure">-1.4 (-4.2%)</span></td>
-                        </tr>
-                        <tr>
-                            <td>gdd</td>
-                            <td>14th October, 2021</td>
-                            <td>32</td>
-                            <td><span className="success">+3 (+9.4%)</span></td>
-                        </tr>
+                        {stakeUpdates.map((stakeUpdate) => {
+                            return (
+                                <tr>
+                                    <td className="block_hash_table">{stakeUpdate.block_hash}</td>
+                                    <td>{getDateString(stakeUpdate.timestamp)}</td>
+                                    <td>{stakeUpdate.initialStake.toFixed(4)}</td>
+                                    <td><span className={getColorAttribute(stakeUpdate.initialStake, stakeUpdate.finalStake)}>{getChangeString(stakeUpdate.initialStake, stakeUpdate.finalStake)}</span></td>
+                                </tr>
+                            )
+                        })}
                         <tr>
                             <td colSpan="3">Initial Stake</td>
-                            <td>32</td>
+                            <td>{stakeUpdates.length > 0 ? stakeUpdates[0].initialStake : "-"}</td>
                         </tr>
                         <tr>
                             <td colSpan="3">Final Stake</td>
-                            <td>35 <span className="success">(+9.3%)</span></td>
+                            <td className={getFinalColorAttribute(stakeUpdates)}>{getFinalStakeString(stakeUpdates)}</td>
                         </tr>
 
                     </table>
@@ -167,7 +149,7 @@ function PoS() {
 
             </div >
             <div className="add-node-container">
-                <AddNode />
+                <AddNode getNodes={getNodes} />
             </div>
 
         </div >
