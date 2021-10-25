@@ -4,6 +4,7 @@ import './App.css'
 import Selector from "./components/selector/selector";
 import Payment from "./pages/payment/payment";
 import Explorer from "./pages/explorer/explorer";
+import PoS from "./pages/pos/pos.js";
 import axios from "axios";
 
 function App() {
@@ -14,7 +15,7 @@ function App() {
     <div className="App">
       <Navbar />
       <Selector setSelected={setSelected} />
-      {selected == 0 ? <Payment /> : <Explorer />}
+      {selected == 0 ? <Payment /> : (selected == 1 ? <PoS /> : <Explorer />)}
     </div>
   );
 }

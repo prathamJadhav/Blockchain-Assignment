@@ -114,11 +114,6 @@ function Explorer() {
                         <div className="main-block-container"><Block block={block} selected={index == selected} index={index} setSelected={setSelected} /></div>
                     )
                 })}
-                {/* <div className="main-block-container-verify">
-                    <h3>Unverified Transactions</h3>
-                    <p>Some transactions many have not been verified yet. Click verify to create a new block and view its transactions.</p>
-                    <button onClick={verifyTransactions}>Verify</button>
-                </div> */}
             </Carousel>
             <br />
             <br />

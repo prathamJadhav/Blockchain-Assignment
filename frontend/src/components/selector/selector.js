@@ -11,6 +11,10 @@ function Selector(props) {
         props.setSelected(0)
     }
     const setSelectedExplorer = () => {
+        setSelected(2)
+        props.setSelected(2)
+    }
+    const setSelectedNode = () => {
         setSelected(1)
         props.setSelected(1)
     }
@@ -20,7 +24,10 @@ function Selector(props) {
             <div className={getSelectedClassName(0)} onClick={setSelectedPayment}>
                 PAYMENT
             </div>
-            <div className={getSelectedClassName(1)} onClick={setSelectedExplorer}>
+            <div className={getSelectedClassName(1)} onClick={setSelectedNode}>
+                PoS
+            </div>
+            <div className={getSelectedClassName(2)} onClick={setSelectedExplorer}>
                 EXPLORER
             </div>
         </div>

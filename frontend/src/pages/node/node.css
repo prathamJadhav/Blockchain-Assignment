@@ -1,0 +1,72 @@
+.node-container {
+    padding-top: 20px;
+    width: 50%;
+    margin: auto;
+}
+
+.node-input-container {
+    display: flex;
+}
+
+.node-file-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.node-container h2 {
+    text-align: center;
+}
+
+.node-input {
+    background-color: #555;
+    width: 90%;
+    font-size: 1.3rem;
+    color: white;
+    flex: 1;
+}
+
+.node-container textarea {
+    height: 200px;
+    font-size: 0.8rem;
+}
+
+.node-header {
+    color: #AAA;
+    padding-bottom: 5px;
+}
+
+.node-container .status-indicator {
+    text-align: center;
+}
+
+.success {
+    color: greenyellow;
+}
+
+.failure {
+    color: red;
+}
+
+button {
+    color: black;
+    background-color: #bbb;
+    padding: 5px 10px;
+    border-radius: 1px;
+    font-size: 1rem;
+    border: none;
+}
+.node-container .submit-button {
+    margin: 0px auto;
+}
+
+.node-button-container {
+    display: flex;
+}
+
+
+@media only screen and (max-width: 900px) {
+        .node-container {
+            width: 92%;
+        }
+}

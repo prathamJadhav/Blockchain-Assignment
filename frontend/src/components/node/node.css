@@ -1,0 +1,10 @@
+.pos-main-container .selected {
+    background-color: rgb(60, 99, 61)
+
+}
+.pos-node-container {
+    padding: 10px;
+    margin-right: 10px;
+    background-color: #555;
+    cursor: pointer;
+}

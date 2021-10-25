@@ -1,0 +1,121 @@
+.pos-main-container {
+    display: flex;
+    align-items: flex-start;
+    width: 90%;
+    margin: 20px auto;
+    gap: 15px;
+}
+
+.add-node-container {
+    padding: 20px;
+    background-color: #333;
+    width: 20%;
+    /* min-width: 200px; */
+}
+
+.nodes-container {
+    padding: 20px;
+    background-color: #333;
+    width: 75%;
+}
+
+
+
+
+
+
+.node-input-container {
+    display: flex;
+}
+
+.node-file-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+/* .node-stake-table {
+    width: 100%;
+} */
+.node-stake-table {
+    width: 100%;
+    margin-top: 20px;
+    /* border: 1px solid black; */
+    text-align: left;
+    border-collapse: collapse;
+    table-layout:fixed;
+    width:100%;
+}
+
+.node-stake-table table, th, td {
+    border: 5px solid #333;
+    padding: 10px;
+    /* border-collapse: collapse; */
+    background-color: #555;
+}
+
+.add-node-container h2 {
+    text-align: center;
+}
+
+.node-input {
+    background-color: #555;
+    width: 90%;
+    font-size: 1.3rem;
+    color: white;
+    flex: 1;
+}
+
+.node-header {
+    color: #AAA;
+    padding-bottom: 5px;
+}
+
+.add-node-container .status-indicator {
+    text-align: center;
+}
+
+.success {
+    color: greenyellow;
+}
+
+.failure {
+    color:coral;
+}
+
+button {
+    color: black;
+    background-color: #bbb;
+    padding: 5px 10px;
+    border-radius: 1px;
+    font-size: 1rem;
+    border: none;
+}
+.add-node-container .submit-button {
+    margin: 0px auto;
+}
+
+.node-button-container {
+    display: flex;
+}
+
+
+@media only screen and (max-width: 1200px) {
+
+    .add-node-container {
+        background-color: #333;
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 10px;
+    }
+
+    .nodes-container {
+        box-sizing: border-box;
+        width: 100%;
+        background-color: #333;
+    }
+    .node-stake-table {
+            width: 100%;
+            overflow-x: auto;
+            display: block;
+        }
+}
