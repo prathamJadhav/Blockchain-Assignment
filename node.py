@@ -4,12 +4,15 @@ import random
 
 
 class Node:
+    #this method id the validate method for every single node in the blockchain
     def validate(self, forger_previous_block_hash, forger_merkle_root):
+        # every node checks the transactions from the unverified table
         unverifiedTransactions = app.Unverified_Transactions.query.order_by(
             app.Unverified_Transactions.timestamp).all()
 
+        # every node gets the last block created block to check previous block hash value
         block = app.Blocks.query.order_by(
-            app.Blocks.timestamp.desc()).first()  # gets all the blocks
+            app.Blocks.timestamp.desc()).first()  # gets last block created
         blockHeight = app.Blocks.query.count()
         previous_block_hash = None
 
@@ -26,7 +29,7 @@ class Node:
             else:
                 break
 
-        # the forger makes the block
+        # merkle root according to validator
         merkleRoot = (merkleTree.buildTree(listForMerkle))
 
         if block is None:
@@ -37,10 +40,16 @@ class Node:
 
         # every validator node will check for he correctness of the block
         accepted = 0  # accepted = 0 -> rejected ; accpeted =1 ->accpeted
-        random1 = random.randint(1, 100)
-        random2 = random.randint(1, 100)
+
+        # to display byzantine behaviour we have added randomness
+        # according to this a node will exhibit byzantine behaviour with 1/15 probability
+        random1 = random.randint(1, 15)
+        random2 = random.randint(1, 15)
         print("random1 : ", random1)
         print("random2 : ", random2)
+
+        # this is just to display byzantine behaviour
+        # byzantine behaviour means if node know block should be accepted it will reject it and vice versa
         byzantine = False
         if random1 == random2:
             byzantine = True

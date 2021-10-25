@@ -56,7 +56,7 @@ class Blocks(db.Model):
         self.timestamp = timestamp
         self.merkleRoot = merkleRoot
 
-
+# table for nodes to store the nodes along with stake
 class Nodes(db.Model):
     node_id = db.Column(db.String, primary_key=True)
     node_name = db.Column(db.String)
@@ -69,7 +69,7 @@ class Nodes(db.Model):
         self.stake = stake
         self.timestamp = timestamp
 
-
+# table for stake updates to track changes in stake of node
 class StakeUpdates(db.Model):
     stakeUpdateId = db.Column(db.Integer, primary_key=True)
     node_id = db.Column(db.String, db.ForeignKey('nodes.node_id'))
@@ -141,8 +141,6 @@ class Blockchain():
         self.block_hash = sha256(self.block_data.encode()).hexdigest()
 
 # adding a node into the Node table
-
-
 @app.route('/api/addNode', methods=['POST'])
 def newNode():
     json_data = request.get_json()
@@ -154,7 +152,7 @@ def newNode():
     signature = json_data['signature']  # signature
     timestamp = int(round(time.time()))
 
-    # checking authenticity
+    # checking authenticity of node adding authority i.e. Dexter
     key = RSA.import_key(open('public.pem').read())
 
     h = SHA256.new(message)
@@ -185,7 +183,7 @@ def newNode():
         }
         return jsonify(response), 400  # 200-good, 400-bad
 
-
+# endpoint for adding unverified transaction
 @app.route('/api/addTransaction', methods=['POST'])
 def transaction():
     json_data = request.get_json()
@@ -230,7 +228,7 @@ def transaction():
         }
         return jsonify(response), 400  # 200-good, 400-bad
 
-
+# endpoint to view list of blocks
 @app.route('/api/viewBlocks', methods=['GET'])
 def viewBlocks():
     blocksList = Blocks.query.order_by(Blocks.timestamp).all()
@@ -248,7 +246,7 @@ def viewBlocks():
 
     return jsonify(response), 200
 
-
+# endpoint to view list of registered nodes
 @app.route('/api/viewNodes', methods=['GET'])
 def viewNodes():
     nodesList = Nodes.query.order_by(Nodes.timestamp).all()
@@ -265,7 +263,7 @@ def viewNodes():
 
     return jsonify(response), 200
 
-
+# endpoint to view a particular nodes stake updates
 @app.route('/api/viewStakeUpdates', methods=['POST'])
 def viewStakeUpdates():
 
@@ -288,7 +286,7 @@ def viewStakeUpdates():
 
     return jsonify(response), 200
 
-
+# endpoint to view verified transactions
 @app.route('/api/viewTransactions', methods=['POST'])
 def viewTransactions():
     json_data = request.get_json()
@@ -310,7 +308,7 @@ def viewTransactions():
 
     return jsonify(response), 200
 
-
+# endpoint to view list of unverified transactions
 @app.route('/api/viewUnverifiedTransactions', methods=['GET'])
 def viewUnverifiedTransactions():
 
@@ -330,7 +328,7 @@ def viewUnverifiedTransactions():
 
     return jsonify(response), 200
 
-
+# retruns list of nodes apart from forger node which act as validators/attesters
 def getValidators(forger_id):
     # get the list of nodes which act as validator
     validatorList = []
@@ -340,7 +338,7 @@ def getValidators(forger_id):
             validatorList.append(node.node_id)
     return validatorList
 
-
+# method which will check consensus of the validators/attestors
 def validate(forger_id, forger_previous_block_hash, forger_merkle_root, transactionAmount, blockHash):
     validatorList = getValidators(forger_id)
 
@@ -353,9 +351,7 @@ def validate(forger_id, forger_previous_block_hash, forger_merkle_root, transact
     for validator in validatorList:
         # every validator node will check for he correctness of the block
         newNode = node.Node()
-        # print("forger block hash ", forger_merkle_root)
-        accepted = newNode.validate(
-            forger_previous_block_hash, forger_merkle_root)
+        accepted = newNode.validate(forger_previous_block_hash, forger_merkle_root)
         if accepted == 1:
             acceptingNodeList.append(validator)
             acceptingNodes += 1
@@ -366,6 +362,8 @@ def validate(forger_id, forger_previous_block_hash, forger_merkle_root, transact
     totalValidators = acceptingNodes + rejectingNodes
     consensus = acceptingNodes/totalValidators
     print("consensus : ", consensus)
+
+    #checking if 2/3 majority has been acheived
     if consensus >= (2/3):
         print("consensus granted")
         distributeRewards(acceptingNodeList, rejectingNodeList,
@@ -377,19 +375,20 @@ def validate(forger_id, forger_previous_block_hash, forger_merkle_root, transact
                       accepted, forger_id, transactionAmount, blockHash)
     return False
 
-
+# method which distributes rewards and penalties according to the status of the validation method
 def distributeRewards(acceptingNodeList, rejectingNodeList, accepted, forger_id, transactionAmount, block_hash):
+
+    # transaction fee has been set 0.1% of the total transaction amount of all the transactions in the block
     reward = 0.001*transactionAmount / (len(acceptingNodeList) + len(rejectingNodeList) + 1)
     timestamp = int(round(time.time()))
     if accepted == 1:
         print("accepted")
         for node in acceptingNodeList:
-            # get stake
+            # get stake and update with reward
             nodeToBeUpdated = Nodes.query.filter_by(node_id=node).first()
             stake = nodeToBeUpdated.stake
             newStake = stake + reward
-            stakeUpdate = StakeUpdates(
-                node, block_hash, stake, newStake, timestamp)
+            stakeUpdate = StakeUpdates(node, block_hash, stake, newStake, timestamp)
             db.session.add(stakeUpdate)
             nodeToBeUpdated.stake = newStake
             db.session.commit()
@@ -404,6 +403,7 @@ def distributeRewards(acceptingNodeList, rejectingNodeList, accepted, forger_id,
         nodeToBeUpdated.stake = newStake
         db.session.commit()
 
+        # get stake and reduce because they rejected
         for node in rejectingNodeList:
             nodeToBeUpdated = Nodes.query.filter_by(node_id=node).first()
             stake = nodeToBeUpdated.stake
@@ -449,11 +449,9 @@ def distributeRewards(acceptingNodeList, rejectingNodeList, accepted, forger_id,
 
     return
 
-
+# endpoint which first decides forger and then makes block and passes to validators for validation
 @app.route('/api/verifyTransaction', methods=['GET'])
 def verify():
-    # query and get the list of unverified transactions sorted according to ascending timestamps
-
     # run the algorithm for pos and select a node
     nodesList = Nodes.query.all()
     pos = POS(nodesList)
@@ -468,14 +466,14 @@ def verify():
         return jsonify({'message': 'empty'}), 200
 
     block = Blocks.query.order_by(
-        Blocks.timestamp.desc()).first()  # gets all the blocks
+        Blocks.timestamp.desc()).first()  # gets the last block created
     blockHeight = Blocks.query.count()
     previous_block_hash = None
     hashString = ""
 
     count = 0
     transactionAmount = 0
-    # making the unverified transaction into verified transaction
+    # making the list for calculating merkle root
     listForMerkle = []
     for unverified in unverifiedTransactions:
         if(count < 10):
@@ -526,13 +524,15 @@ def verify():
     hashString += merkleRoot
     blockHash = sha256(hashString.encode()).hexdigest()
 
+    # this call here calls the validators to check correctness of newly created block
     validation = validate(forger, previous_block_hash,
                           merkleRoot, transactionAmount, blockHash)
 
     response = {}
 
+    # if validators have reached 2/3 consenus
     if validation == True:
-        # make block
+        # making new block
         newBlock = Blocks(timestamp, blockHash,
                           previous_block_hash, blockHeight, merkleRoot)
         db.session.add(newBlock)
@@ -565,15 +565,8 @@ def verify():
         response['message'] = "failure"
         response['error'] = True
         return jsonify(response), 400
-    # this represents the block hash
 
-    # the forger goes on to make the block and passes it on to the validators
-
-    # if 2/3 majority is acheived among the validators then the block is forged otherwise error is returned
-
-    # new block is added to blockchain
-
-
+# endpoint for verifying the blocks in the blockchain
 @app.route('/api/verifyBlocks', methods=['GET'])
 def verifyBlocks():
     # calculate the block hash again and then check if it matches the hash value
@@ -586,8 +579,7 @@ def verifyBlocks():
         if block.block_height == 0:
             hashString += str(block.timestamp) + str(block.block_height)
         else:
-            hashString += str(block.timestamp) + \
-                block.previous_block_hash+str(block.block_height)
+            hashString += str(block.timestamp) + block.previous_block_hash+str(block.block_height)
 
         transactionList = Verified_Transactions.query.filter_by(
             block_hash=block.block_hash).all()
