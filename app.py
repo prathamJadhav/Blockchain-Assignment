@@ -58,11 +58,14 @@ class Blocks(db.Model):
 
 class Nodes(db.Model):
     node_id = db.Column(db.String, primary_key=True)
+    node_name = db.Column(db.String)
     stake = db.Column(db.Float)
     timestamp = db.Column(db.Integer)
+    
 
-    def __init__(self, node_id, stake, timestamp):
+    def __init__(self, node_id, node_name, stake, timestamp):
         self.node_id = node_id
+        self.node_name = node_name
         self.stake = stake
         self.timestamp = timestamp
 
@@ -149,8 +152,6 @@ def newNode():
     message = bytes(json_data['message'], 'utf-8')  # stringified json
     signature = json_data['signature']  # signature
     timestamp = int(round(time.time()))
-    #block_hash = json_data['block_hash']
-    error = False
 
     # checking authenticity
     key = RSA.import_key(open('public.pem').read())
@@ -164,7 +165,7 @@ def newNode():
             'error': False
         }
 
-        node = Nodes(node_id, stake, timestamp)
+        node = Nodes(node_id, node_name,stake, timestamp)
 
         db.session.add(node)
         db.session.commit()
@@ -186,7 +187,6 @@ def newNode():
 
 @app.route('/api/addTransaction', methods=['POST'])
 def transaction():
-    print('here')
     json_data = request.get_json()
 
     customer = json_data['customer']  # name
@@ -242,6 +242,44 @@ def viewBlocks():
         temp['timestamp'] = block.timestamp
         temp['block_height'] = block.block_height
         temp['merkleRoot'] = block.merkleRoot
+
+        response.append(temp)
+
+    return jsonify(response), 200
+
+
+@app.route('/api/viewNodes', methods=['GET'])
+def viewNodes():
+    nodesList = Nodes.query.order_by(Nodes.timestamp).all()
+
+    response = []
+    for node in nodesList:
+        temp = {}
+        temp['node_id'] = node.node_id
+        temp['node_name'] = node.node_name
+        temp['stake'] = node.stake
+        temp['timestamp'] = node.timestamp
+
+        response.append(temp)
+
+    return jsonify(response), 200
+
+@app.route('/api/viewStakeUpdates', methods=['GET'])
+def viewStakeUpdates():
+
+    json_data = request.get_json()
+
+    node_id = json_data['node_id']
+    updateList = StakeUpdates.query.filter_by(node_id=node_id).order_by(StakeUpdates.timestamp).all()
+
+    response = []
+    for update in updateList:
+        temp = {}
+        temp['node_id'] = update.node_id
+        temp['block_hash'] = update.block_hash
+        temp['initialStake'] = update.initialStake
+        temp['finalStake'] = update.finalStake
+        temp['timestamp'] = update.timestamp
 
         response.append(temp)
 
@@ -443,7 +481,6 @@ def verify():
     # this decodes the forger node and it returns the node_id of the forger node
     forger = pos.forger(previous_block_hash)
     print("forger", forger)
-    # forger = nodesList[0].node_id
 
     # the forger calculates merkle root
     merkleRoot = (merkleTree.buildTree(listForMerkle))
