@@ -25,22 +25,39 @@ The online portal is hosted here: https://dexters-coffee.herokuapp.com
 
 
 ### Basic Overview
-In the Proof of Stake consensus algorithm, several nodes participate in the block forging and validation process by putting down a stake as collateral during the validation process. This incentivives the nodes to correctly forge and validate blocks, on doing which they recieve a reward or are penalized when doing so incorrectly. 
-### Process of adding a new node
+In the Proof of Stake consensus algorithm, several nodes participate in the block forging and validation process by putting down a stake as collateral during the validation process. This incentivizes the nodes to correctly forge and validate blocks, on doing which they recieve a reward or are penalized when doing so incorrectly. 
+### Adding a new node
 Since we are not dealing with a cryptocurrency, but using a blockchain for the purpose of storing transactions for Dexter's coffee shop, it is assumed that the stake is paid to Dexter in fiat currency.   
 In the PoS section of the web portal, an option exists for Dexter to add a new node to the Blockchain. Here, he can input the node name and stake that they have put down. To make sure that it is Dexter who is adding these new nodes, the data is signed with his private key and then verified at the server. To prevent duplicating nodes by sending the same request as Dexter, a unique ID is generated for each node, so that the signature is different every time. 
 Once verified, the node details are stored in the database.
 We can see the 'Add Node' option on the right in the image given above.
 
-### Forging a block
-When a new block needs to be created, a node is selected with probability proportionate to its stake in the system. 
+### Simulating Node Behaviour
+Since it is not possible for us to run nodes in a P2P network due to time constraint and complexity, we decided to simulate node behaviour in the backend itself. 
 
+### Simulating Byzantine Behaviour
+In order to show that byzantine nodes that validate blocks incorrectly are punished, we simulate incorrect results for some nodes. Every node has a 1/15 chance of displaying byzantine behaviour. When this behaviour is identified by other nodes during validation, a small fee is cut from the stake of this node.
+
+### Forging and validating a block
+When a new block needs to be created, a node is selected with probability proportionate to its stake in the system. This node forges the new block (creates merkle root, sets previous block hash, etc.). The other blocks then validate this newly created block. Once consensus is reached, the forgers and validators who took the right decision are rewarded, and those who displayed byzantine behaviour are punished. 
+
+### Viewing the stake details
+In the main section in the PoS tab, we can see a list of nodes that have participated in the PoS consensus mechanism. On selecting a node, we can see a table displaying the stake history for that node. Columns include the block hash (for the block for which the reward/penalty was generated), timestamp, initial stake and net profit/loss. The nodes that are in consensus have profit hightlighted in green and byzantine nodes have loss highlighted in red. the last two rows indicate the initial stake that was put down as well as the stake at the moment.
+
+The above image of the PoS tab shows the stake history for one of the nodes.
+
+A block diagram of the PoS process is given below:
+
+
+![PoS Diagram](/documentation/resources/pos_diagram.png)
+
+Note: In an actual PoS system, each node must have its own copy of transactions. However, since we are simulating nodes through software, the nodes will use a shared pool of unverified transactions for forging and validation. Any inconsistencies in transactions between nodes is simulated using the byzantine nodes as mentioned above.
 
 ## Installation
 
 ### Backend:
 
-Use a virutal environment to set up the python modules.
+Use a virtual environment to set up the python modules.
 ```sh
 virtualenv env
 source env/bin/activate
