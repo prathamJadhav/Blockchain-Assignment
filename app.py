@@ -437,10 +437,8 @@ def verify():
     # query and get the list of unverified transactions sorted according to ascending timestamps
 
     # run the algorithm for pos and select a node
-    # get nodes from sql
     nodesList = Nodes.query.all()
     pos = POS(nodesList)
-    # print(nodesList[0].node_id)
     # send the transactions to the node
     # get the block from the selected node and send the block, traensctions to other nodes to verfiy
 
