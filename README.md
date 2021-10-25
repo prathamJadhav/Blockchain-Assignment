@@ -6,6 +6,36 @@ The group members include:
 - Harsh Gupta (2019A7PS0103H)
 - Prathamesh Jadhav (2019A7PS0084H)
 
+## Project Details
+Dexter's Coffee is an online portal for Dexter to add transactions in a secure tamper-proof way. The transactions he creates are stored in a blockchain and are publicly viewable.
+
+The online portal is hosted here: https://dexters-coffee.herokuapp.com
+
+## New in Assignment 2 (Implementation of PoS consensus algorithm)
+### Changes in Frontend and codebase
+#### Backend
+- Routes for adding, getting nodes and recieving stake updates have been added to `app.py`
+- The lot selection process for PoS has been done in `Proof of Stake.py` and `Lot.py`
+- The validation functions for nodes have been added to `node.py`
+#### Frontend
+- A new page has been created for PoS, the code for which is in the `frontend/src/pages/pos` folder
+- A screenshot of the new page on the web portal is given below:
+
+![PoS](/documentation/resources/pos.png)
+
+
+### Basic Overview
+In the Proof of Stake consensus algorithm, several nodes participate in the block forging and validation process by putting down a stake as collateral during the validation process. This incentivives the nodes to correctly forge and validate blocks, on doing which they recieve a reward or are penalized when doing so incorrectly. 
+### Process of adding a new node
+Since we are not dealing with a cryptocurrency, but using a blockchain for the purpose of storing transactions for Dexter's coffee shop, it is assumed that the stake is paid to Dexter in fiat currency.   
+In the PoS section of the web portal, an option exists for Dexter to add a new node to the Blockchain. Here, he can input the node name and stake that they have put down. To make sure that it is Dexter who is adding these new nodes, the data is signed with his private key and then verified at the server. To prevent duplicating nodes by sending the same request as Dexter, a unique ID is generated for each node, so that the signature is different every time. 
+Once verified, the node details are stored in the database.
+We can see the 'Add Node' option on the right in the image given above.
+
+### Forging a block
+A node is selected with probability proportionate to its stake in the system. 
+
+
 ## Installation
 
 ### Backend:
@@ -30,12 +60,6 @@ python app.py
 ```
 The app will start on port `9000` by default, it should be running at localhost:9000
 
-
-
-## Project Details
-Dexter's Coffee is an online portal for Dexter to add transactions in a secure tamper-proof way. The transactions he creates are stored in a blockchain and are publicly viewable.
-
-The online portal is hosted here: https://dexters-coffee.herokuapp.com
 
 
 ### Authentication
